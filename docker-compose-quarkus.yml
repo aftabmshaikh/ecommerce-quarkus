@@ -1,0 +1,215 @@
+version: '3.8'
+
+services:
+  # Consul Server for Service Discovery
+  consul-server:
+    image: consul:1.15
+    container_name: consul-server
+    ports:
+      - "8500:8500"
+    command: agent -server -bootstrap -ui -client=0.0.0.0
+    networks:
+      - ecommerce-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: api-gateway
+    environment:
+      QUARKUS_HTTP_PORT: 8080
+      QUARKUS_CONSUL_CLIENT_AGENT_HOST: consul-server
+      QUARKUS_CONSUL_CLIENT_AGENT_PORT: 8500
+      QUARKUS_HTTP_CORS_ORIGINS: "/**"
+      QUARKUS_HTTP_CORS_METHODS: "GET,POST,PUT,DELETE,OPTIONS"
+      QUARKUS_HTTP_CORS_HEADERS: "Content-Type,Authorization"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - consul-server
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/q/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Product Service
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: product-service
+    environment:
+      QUARKUS_HTTP_PORT: 8081
+      QUARKUS_CONSUL_CLIENT_AGENT_HOST: consul-server
+      QUARKUS_CONSUL_CLIENT_AGENT_PORT: 8500
+      QUARKUS_CONSUL_CONFIG_ENABLED: "true"
+      QUARKUS_CONSUL_CONFIG_PROPERTIES_VALUE_KEYS: "config/application"
+    ports:
+      - "8081:8081"
+    depends_on:
+      - consul-server
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/q/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: user-service
+    environment:
+      QUARKUS_HTTP_PORT: 8082
+      QUARKUS_CONSUL_CLIENT_AGENT_HOST: consul-server
+      QUARKUS_CONSUL_CLIENT_AGENT_PORT: 8500
+      QUARKUS_CONSUL_CONFIG_ENABLED: "true"
+      QUARKUS_CONSUL_CONFIG_PROPERTIES_VALUE_KEYS: "config/application"
+    ports:
+      - "8082:8082"
+    depends_on:
+      - consul-server
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/q/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Order Service
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: order-service
+    environment:
+      QUARKUS_HTTP_PORT: 8083
+      QUARKUS_CONSUL_CLIENT_AGENT_HOST: consul-server
+      QUARKUS_CONSUL_CLIENT_AGENT_PORT: 8500
+      QUARKUS_CONSUL_CONFIG_ENABLED: "true"
+      QUARKUS_CONSUL_CONFIG_PROPERTIES_VALUE_KEYS: "config/application"
+    ports:
+      - "8083:8083"
+    depends_on:
+      - consul-server
+      - product-service
+      - user-service
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/q/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Cart Service
+  cart-service:
+    build:
+      context: ./cart-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: cart-service
+    environment:
+      QUARKUS_HTTP_PORT: 8084
+      QUARKUS_CONSUL_CLIENT_AGENT_HOST: consul-server
+      QUARKUS_CONSUL_CLIENT_AGENT_PORT: 8500
+      QUARKUS_CONSUL_CONFIG_ENABLED: "true"
+      QUARKUS_CONSUL_CONFIG_PROPERTIES_VALUE_KEYS: "config/application"
+    ports:
+      - "8084:8084"
+    depends_on:
+      - consul-server
+      - product-service
+      - user-service
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/q/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: payment-service
+    environment:
+      QUARKUS_HTTP_PORT: 8085
+      QUARKUS_CONSUL_CLIENT_AGENT_HOST: consul-server
+      QUARKUS_CONSUL_CLIENT_AGENT_PORT: 8500
+      QUARKUS_CONSUL_CONFIG_ENABLED: "true"
+      QUARKUS_CONSUL_CONFIG_PROPERTIES_VALUE_KEYS: "config/application"
+    ports:
+      - "8085:8085"
+    depends_on:
+      - consul-server
+      - order-service
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/q/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: notification-service
+    environment:
+      QUARKUS_HTTP_PORT: 8086
+      QUARKUS_CONSUL_CLIENT_AGENT_HOST: consul-server
+      QUARKUS_CONSUL_CLIENT_AGENT_PORT: 8500
+      QUARKUS_CONSUL_CONFIG_ENABLED: "true"
+      QUARKUS_CONSUL_CONFIG_PROPERTIES_VALUE_KEYS: "config/application"
+    ports:
+      - "8086:8086"
+    depends_on:
+      - consul-server
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/q/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Inventory Service
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: inventory-service
+    environment:
+      QUARKUS_HTTP_PORT: 8087
+      QUARKUS_CONSUL_CLIENT_AGENT_HOST: consul-server
+      QUARKUS_CONSUL_CLIENT_AGENT_PORT: 8500
+      QUARKUS_CONSUL_CONFIG_ENABLED: "true"
+      QUARKUS_CONSUL_CONFIG_PROPERTIES_VALUE_KEYS: "config/application"
+    ports:
+      - "8087:8087"
+    depends_on:
+      - consul-server
+      - product-service
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/q/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  ecommerce-network:
+    driver: bridge

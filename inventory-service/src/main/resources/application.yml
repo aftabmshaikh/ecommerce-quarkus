@@ -1,0 +1,57 @@
+quarkus:
+  application:
+    name: inventory-service
+    version: 1.0.0
+
+  http:
+    port: 8087
+    host: 0.0.0.0
+
+  # Database Configuration
+  datasource:
+    db-kind: postgresql
+    username: ${DB_USER:inventory_user}
+    password: ${DB_PASS:inventory_pass}
+    jdbc:
+      url: jdbc:postgresql://${DB_HOST:postgres-inventory}:${DB_PORT:5432}/${DB_NAME:inventory_db}
+  
+  hibernate-orm:
+    database:
+      generation: update
+    log:
+      sql: true
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+    consumer:
+      group-id: inventory-service-group
+
+  # Consul Configuration
+  consul:
+    agent:
+      host: ${CONSUL_HOST:consul-server}
+      port: ${CONSUL_PORT:8500}
+    discovery:
+      enabled: true
+      service-name: ${quarkus.application.name}
+      health-check-path: /q/health/live
+      health-check-interval: 30s
+      tags: "version=${quarkus.application.version}"
+
+  # Health Checks
+  smallrye-health:
+    root-path: /q/health
+    liveness-path: /live
+    readiness-path: /ready
+
+  # Logging Configuration
+  log:
+    level: DEBUG
+    category:
+      "com.ecommerce": DEBUG
+      "org.hibernate.SQL": true
+      "org.hibernate.type.descriptor.sql": TRACE
+      "org.apache.kafka": INFO
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"

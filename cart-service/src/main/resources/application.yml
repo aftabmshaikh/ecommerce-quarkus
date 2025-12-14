@@ -1,0 +1,74 @@
+quarkus:
+  application:
+    name: cart-service
+    version: 1.0.0
+
+  http:
+    port: 8084
+    host: 0.0.0.0
+
+  # Redis Configuration
+  redis:
+    hosts: redis://${REDIS_HOST:redis}:${REDIS_PORT:6379}
+    timeout: 10s
+
+  # Consul Configuration
+  consul:
+    agent:
+      host: ${CONSUL_HOST:consul-server}
+      port: ${CONSUL_PORT:8500}
+    discovery:
+      enabled: true
+      service-name: ${quarkus.application.name}
+      health-check-path: /q/health/live
+      health-check-interval: 30s
+      tags: "version=${quarkus.application.version}"
+    config:
+      enabled: true
+      properties-value-keys: "config/application,config/${quarkus.application.name}"
+
+  # Health Checks
+  smallrye-health:
+    root-path: /q/health
+    liveness-path: /live
+    readiness-path: /ready
+
+  # Logging
+  log:
+    level: INFO
+    category:
+      "com.ecommerce": DEBUG
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"
+
+  # Metrics
+  micrometer:
+    export:
+      prometheus:
+        enabled: true
+        path: /q/metrics
+    binder:
+      redis:
+        enabled: true
+    registry-enabled-default: false
+
+  # Kubernetes (if needed)
+  kubernetes:
+    service-type: ClusterIP
+    ports:
+      - name: http
+        container-port: 8084
+        node-port: 30084
+    container-image:
+      group: ecommerce
+      name: ${quarkus.application.name}
+      tag: ${QUARKUS_APP_VERSION:latest}
+
+# Logging Configuration
+  log:
+    level: DEBUG
+    category:
+      "com.ecommerce": DEBUG
+      "io.quarkus.redis": INFO
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"

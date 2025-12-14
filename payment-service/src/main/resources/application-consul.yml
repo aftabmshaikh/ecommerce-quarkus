@@ -1,0 +1,37 @@
+# Consul Configuration for Payment Service
+quarkus:
+  application:
+    name: payment-service
+    version: 1.0.0
+
+  http:
+    port: 8085
+    host: 0.0.0.0
+
+  consul:
+    agent:
+      host: localhost
+      port: 8500
+    discovery:
+      enabled: true
+      service-name: ${quarkus.application.name}
+      health-check-path: /q/health/live
+      health-check-interval: 30s
+      tags: version=${quarkus.application.version}
+
+  config:
+    source:
+      additional-locations: "consul:config/${quarkus.application.name}","consul:config/application"
+
+  smallrye-health:
+    root-path: /q/health
+    liveness-path: /live
+    readiness-path: /ready
+    startup-path: /started
+
+  log:
+    level: INFO
+    category:
+      "org.jboss.resteasy": INFO
+      "io.quarkus": INFO
+      "com.ecommerce": DEBUG

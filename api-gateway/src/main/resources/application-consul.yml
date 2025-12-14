@@ -1,0 +1,45 @@
+# Consul Configuration
+quarkus:
+  application:
+    name: api-gateway
+    version: 1.0.0
+
+  # HTTP Server Configuration
+  http:
+    port: 8080
+    host: 0.0.0.0
+    cors: true
+    cors-headers: "Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin"
+    cors-methods: "GET,PUT,POST,DELETE,OPTIONS"
+
+  # Consul Service Discovery
+  consul:
+    agent:
+      host: localhost
+      port: 8500
+    discovery:
+      enabled: true
+      service-name: ${quarkus.application.name}
+      health-check-path: /q/health/live
+      health-check-interval: 30s
+      tags: version=${quarkus.application.version}
+
+  # Consul Config
+  config:
+    source:
+      additional-locations: "consul:config/${quarkus.application.name}","consul:config/application"
+
+  # Health Check
+  smallrye-health:
+    root-path: /q/health
+    liveness-path: /live
+    readiness-path: /ready
+    startup-path: /started
+
+  # Logging
+  log:
+    level: INFO
+    category:
+      "org.jboss.resteasy": INFO
+      "io.quarkus": INFO
+      "com.ecommerce": DEBUG

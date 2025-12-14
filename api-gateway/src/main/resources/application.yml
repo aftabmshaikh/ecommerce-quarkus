@@ -1,0 +1,141 @@
+quarkus:
+  application:
+    name: api-gateway
+    version: 1.0.0
+
+  # HTTP Server Configuration
+  http:
+    port: 8080
+    host: 0.0.0.0
+    cors: true
+    cors-headers: "Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin"
+    cors-methods: "GET,PUT,POST,DELETE,OPTIONS"
+
+  # REST Clients
+  rest-client:
+    product-service:
+      url: ${PRODUCT_SERVICE_URL:http://product-service:8081}
+    order-service:
+      url: ${ORDER_SERVICE_URL:http://order-service:8083}
+    user-service:
+      url: ${USER_SERVICE_URL:http://user-service:8082}
+    inventory-service:
+      url: ${INVENTORY_SERVICE_URL:http://inventory-service:8087}
+    cart-service:
+      url: ${CART_SERVICE_URL:http://cart-service:8084}
+    payment-service:
+      url: ${PAYMENT_SERVICE_URL:http://payment-service:8085}
+    notification-service:
+      url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8086}
+
+  # Security (OIDC/Keycloak)
+  oidc:
+    auth-server-url: ${KEYCLOAK_URL:http://keycloak:8080}/realms/${KEYCLOAK_REALM:your-realm}
+    client-id: ${KEYCLOAK_CLIENT_ID:api-gateway}
+    credentials:
+      secret: ${KEYCLOAK_CLIENT_SECRET:}
+    token:
+      issuer: ${KEYCLOAK_ISSUER:${quarkus.oidc.auth-server-url}}
+    roles:
+      role-claim-path: "realm_access.roles"
+    authentication:
+      cookie-path: /
+      cookie-max-age: 3600
+
+  # Consul Configuration
+  consul:
+    agent:
+      host: ${CONSUL_HOST:consul-server}
+      port: ${CONSUL_PORT:8500}
+    discovery:
+      enabled: true
+      service-name: ${quarkus.application.name}
+      health-check-path: /q/health/live
+      health-check-interval: 30s
+      tags: "version=${quarkus.application.version}"
+    config:
+      enabled: true
+      properties-value-keys: "config/application,config/${quarkus.application.name}"
+
+  # Metrics
+  micrometer:
+    export:
+      prometheus:
+        enabled: true
+        path: /q/metrics
+    binder:
+      http-server:
+        enabled: true
+    registry-enabled-default: false
+
+  # Health Checks
+  smallrye-health:
+    root-path: /q/health
+    liveness-path: /live
+    readiness-path: /ready
+    startup-path: /started
+
+  # Logging
+  log:
+    level: INFO
+    category:
+      "org.jboss.resteasy": INFO
+      "io.quarkus": INFO
+      "com.ecommerce": DEBUG
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"
+      json: false
+
+  # Kubernetes (if needed)
+  kubernetes:
+    service-type: LoadBalancer
+    ports:
+      http:
+        port: 80
+        target-port: 8080
+    container-image:
+      group: ecommerce
+      name: ${quarkus.application.name}
+      tag: ${QUARKUS_APP_VERSION:latest}
+
+# Logging Configuration
+  log:
+    level: DEBUG
+    category:
+      "com.ecommerce": DEBUG
+      "org.hibernate.SQL": true
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"
+      json: false
+    builder: jib
+    group: "ecommerce"
+    name: "api-gateway"
+    tag: "1.0.0-SNAPSHOT"
+    insecure: true
+    build: true
+    push: false
+    username: "your-username"
+    password: "your-password"
+  fault-tolerance:
+    circuit-breaker:
+      productService:
+        request-volume-threshold: 10
+        failure-ratio: 0.5
+        delay: 1000
+        success-threshold: 3
+    timeout:
+      productService:
+        value: 5000
+    bulkhead:
+      productService:
+        value: 10
+        waiting-task-queue: 10
+  rest-client:
+    product-service:
+      url: "stork://product-service"
+    order-service:
+      url: "stork://order-service"
+    user-service:
+      url: "stork://user-service"
+    inventory-service:
+      url: "stork://inventory-service"

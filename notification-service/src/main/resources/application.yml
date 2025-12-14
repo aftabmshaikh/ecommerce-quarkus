@@ -1,0 +1,67 @@
+quarkus:
+  application:
+    name: notification-service
+    version: 1.0.0
+
+  http:
+    port: 8086
+    host: 0.0.0.0
+
+  # Email Configuration
+  mailer:
+    from: ${MAIL_FROM:noreply@example.com}
+    host: ${SMTP_HOST:mailhog}
+    port: ${SMTP_PORT:1025}
+    auth-methods: none
+    ssl: false
+    start-tls: false
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+    consumer:
+      group-id: notification-service-group
+  
+  mp:
+    messaging:
+      incoming:
+        notifications:
+          connector: smallrye-kafka
+          topic: notifications
+          value:
+            deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  # Consul Configuration
+  consul:
+    agent:
+      host: ${CONSUL_HOST:consul-server}
+      port: ${CONSUL_PORT:8500}
+    discovery:
+      enabled: true
+      service-name: ${quarkus.application.name}
+      health-check-path: /q/health/live
+      health-check-interval: 30s
+      tags: "version=${quarkus.application.version}"
+
+  # Health Checks
+  smallrye-health:
+    root-path: /q/health
+    liveness-path: /live
+    readiness-path: /ready
+
+  # Logging
+  log:
+    level: INFO
+    category:
+      "com.ecommerce": DEBUG
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"
+
+# Logging Configuration
+  log:
+    level: DEBUG
+    category:
+      "com.ecommerce": DEBUG
+      "io.quarkus.mailer": DEBUG
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"

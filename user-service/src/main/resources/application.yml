@@ -1,0 +1,81 @@
+quarkus:
+  application:
+    name: user-service
+    version: 1.0.0
+
+  http:
+    port: 8082
+    host: 0.0.0.0
+
+  # Database Configuration
+  datasource:
+    db-kind: postgresql
+    username: ${DB_USER:user_user}
+    password: ${DB_PASS:user_pass}
+    jdbc:
+      url: jdbc:postgresql://${DB_HOST:postgres-user}:${DB_PORT:5432}/${DB_NAME:user_db}
+  
+  hibernate-orm:
+    database:
+      generation: update
+    log:
+      sql: ${QUARKUS_HIBERNATE_ORM_LOG_SQL:false}
+
+  # Keycloak Admin Client
+  keycloak:
+    admin:
+      server-url: ${KEYCLOAK_URL:http://keycloak:8080}
+      realm: ${KEYCLOAK_REALM:your-realm}
+      client-id: ${KEYCLOAK_CLIENT_ID:user-service}
+      client-secret: ${KEYCLOAK_CLIENT_SECRET:}
+      grant-type: client_credentials
+
+  # JWT Configuration
+  smallrye-jwt:
+    jwks-uri: ${KEYCLOAK_URL:http://keycloak:8080}/realms/${KEYCLOAK_REALM:your-realm}/protocol/openid-connect/certs
+    issuer: ${KEYCLOAK_URL:http://keycloak:8080}/realms/${KEYCLOAK_REALM:your-realm}
+    token:
+      issuer: ${KEYCLOAK_URL:http://keycloak:8080}/realms/${KEYCLOAK_REALM:your-realm}
+    publickey: ${JWT_PUBLIC_KEY:}
+    claims:
+      roles: realm_access.roles
+
+  # Consul Configuration
+  consul:
+    agent:
+      host: ${CONSUL_HOST:consul-server}
+      port: ${CONSUL_PORT:8500}
+    discovery:
+      enabled: true
+      service-name: ${quarkus.application.name}
+      health-check-path: /q/health/live
+      health-check-interval: 30s
+      tags: "version=${quarkus.application.version}"
+    config:
+      enabled: true
+      properties-value-keys: "config/application,config/${quarkus.application.name}"
+
+  # Health Checks
+  smallrye-health:
+    root-path: /q/health
+    liveness-path: /live
+    readiness-path: /ready
+    startup-path: /started
+
+  # Logging
+  log:
+    level: INFO
+    category:
+      "org.hibernate.SQL": ${QUARKUS_HIBERNATE_ORM_LOG_SQL:false}
+      "com.ecommerce": DEBUG
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"
+
+# Logging Configuration
+  log:
+    level: DEBUG
+    category:
+      "com.ecommerce": DEBUG
+      "org.hibernate.SQL": true
+    console:
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"
