@@ -16,7 +16,7 @@ A modern, cloud-native e-commerce platform built with Quarkus, a Kubernetes Nati
 
 ## 🛠️ Tech Stack
 
-### Backend (Quarkus Microservices)
+### ecommerce-quarkus (Quarkus Microservices)
 - **Quarkus 3.x** - Supersonic Subatomic Java framework
 - **RESTEasy Reactive** - Non-blocking REST endpoints
 - **Hibernate Reactive with Panache** - Reactive data access

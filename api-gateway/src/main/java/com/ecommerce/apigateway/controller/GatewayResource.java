@@ -153,6 +153,15 @@ public class GatewayResource {
     }
 
     public Response fallback(String path, @Context UriInfo uriInfo) {
+        return buildFallbackResponse();
+    }
+
+    // Overload used as fallback for proxyPost/proxyPut
+    public Response fallback(String path, String body, @Context UriInfo uriInfo) {
+        return buildFallbackResponse();
+    }
+
+    private Response buildFallbackResponse() {
         return Response.status(Response.Status.SERVICE_UNAVAILABLE)
                 .entity(Map.of(
                         "status", "error",

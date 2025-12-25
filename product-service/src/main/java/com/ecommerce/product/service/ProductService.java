@@ -12,13 +12,12 @@ import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,6 +41,9 @@ public class ProductService {
     @Channel("inventory-updates")
     Emitter<StockUpdateEvent> inventoryUpdateEmitter;
 
+    @Inject
+    TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+
     @Transactional
     @CacheInvalidateAll(cacheName = "products")
     public ProductResponse createProduct(ProductRequest request) {
@@ -51,11 +53,36 @@ public class ProductService {
 
         Product product = productMapper.toEntity(request);
         productRepository.persist(product);
+        productRepository.flush(); // Ensure the product is persisted before sending event
         
-        productEventEmitter.send(product);
+        // Send event after transaction commits to avoid transaction issues
+        Product productForEvent = product; // Capture for use in callback
+        transactionSynchronizationRegistry.registerInterposedSynchronization(
+            new jakarta.transaction.Synchronization() {
+                @Override
+                public void beforeCompletion() {
+                    // Nothing to do before completion
+                }
+
+                @Override
+                public void afterCompletion(int status) {
+                    if (status == jakarta.transaction.Status.STATUS_COMMITTED) {
+                        try {
+                            productEventEmitter.send(productForEvent);
+                        } catch (Exception e) {
+                            log.warnf("Failed to send product event: %s", e.getMessage());
+                        }
+                    }
+                }
+            }
+        );
         
         log.infof("Created product with id: %s", product.getId());
-        return productMapper.toDto(product);
+        ProductResponse response = productMapper.toDto(product);
+        if (response == null) {
+            throw new IllegalStateException("Failed to map product to response");
+        }
+        return response;
     }
 
     @CacheResult(cacheName = "products")
@@ -76,7 +103,7 @@ public class ProductService {
     @Transactional
     @CacheInvalidateAll(cacheName = "products")
     public void updateProductRating(UUID productId) {
-        Product product = productRepository.findByIdOptional(productId)
+        productRepository.findByIdOptional(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
         log.infof("Updating rating for product with id: %s", productId);
@@ -106,7 +133,27 @@ public class ProductService {
         
         productRepository.persist(existingProduct);
         
-        productEventEmitter.send(existingProduct);
+        // Send event after transaction commits
+        Product productForEvent = existingProduct;
+        transactionSynchronizationRegistry.registerInterposedSynchronization(
+            new jakarta.transaction.Synchronization() {
+                @Override
+                public void beforeCompletion() {
+                    // Nothing to do before completion
+                }
+
+                @Override
+                public void afterCompletion(int status) {
+                    if (status == jakarta.transaction.Status.STATUS_COMMITTED) {
+                        try {
+                            productEventEmitter.send(productForEvent);
+                        } catch (Exception e) {
+                            log.warnf("Failed to send product event: %s", e.getMessage());
+                        }
+                    }
+                }
+            }
+        );
         
         log.infof("Updated product with id: %s", id);
         return productMapper.toDto(existingProduct);
@@ -118,7 +165,27 @@ public class ProductService {
         Product product = findProductOrThrow(id);
         productRepository.delete(product);
         
-        productEventEmitter.send(product);
+        // Send event after transaction commits
+        Product productForEvent = product;
+        transactionSynchronizationRegistry.registerInterposedSynchronization(
+            new jakarta.transaction.Synchronization() {
+                @Override
+                public void beforeCompletion() {
+                    // Nothing to do before completion
+                }
+
+                @Override
+                public void afterCompletion(int status) {
+                    if (status == jakarta.transaction.Status.STATUS_COMMITTED) {
+                        try {
+                            productEventEmitter.send(productForEvent);
+                        } catch (Exception e) {
+                            log.warnf("Failed to send product event: %s", e.getMessage());
+                        }
+                    }
+                }
+            }
+        );
         
         log.infof("Deleted product with id: %s", id);
     }
@@ -137,7 +204,27 @@ public class ProductService {
         product.setStockQuantity(newStock);
         productRepository.persist(product);
         
-        inventoryUpdateEmitter.send(new StockUpdateEvent(productId, quantity, newStock));
+        // Send event after transaction commits
+        StockUpdateEvent event = new StockUpdateEvent(productId, quantity, newStock);
+        transactionSynchronizationRegistry.registerInterposedSynchronization(
+            new jakarta.transaction.Synchronization() {
+                @Override
+                public void beforeCompletion() {
+                    // Nothing to do before completion
+                }
+
+                @Override
+                public void afterCompletion(int status) {
+                    if (status == jakarta.transaction.Status.STATUS_COMMITTED) {
+                        try {
+                            inventoryUpdateEmitter.send(event);
+                        } catch (Exception e) {
+                            log.warnf("Failed to send inventory update event: %s", e.getMessage());
+                        }
+                    }
+                }
+            }
+        );
         
         log.infof("Updated stock for product: %s. New quantity: %s", productId, newStock);
         return productMapper.toDto(product);

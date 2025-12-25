@@ -37,7 +37,7 @@ public class CartService {
     @Transactional
     public CartResponse getOrCreateCart(UUID userId) {
         return cartRepository.findByUserId(userId)
-                .map(cartMapper::toDto)
+                .map(cartMapper::toDtoWithItems)
                 .orElseGet(() -> createNewCart(userId));
     }
 
@@ -57,11 +57,18 @@ public class CartService {
                 );
         
         cartRepository.persist(cart);
-        return cartMapper.toDto(cart);
+        return cartMapper.toDtoWithItems(cart);
     }
 
     @Transactional
-    public CartResponse updateCartItem(UUID userId, UUID itemId, int quantity) {
+    public CartResponse updateCartItem(UUID userId, String itemId, int quantity) {
+        UUID itemUuid;
+        try {
+            itemUuid = UUID.fromString(itemId);
+        } catch (IllegalArgumentException e) {
+            throw new CartNotFoundException("Invalid item ID format: " + itemId);
+        }
+        
         if (quantity <= 0) {
             return removeItemFromCart(userId, itemId);
         }
@@ -70,23 +77,39 @@ public class CartService {
                 .orElseThrow(() -> new CartNotFoundException("Cart not found for user: " + userId));
         
         cart.getItems().stream()
-                .filter(item -> item.getId().equals(itemId))
+                .filter(item -> item.getId().equals(itemUuid))
                 .findFirst()
-                .ifPresent(item -> {
-                    validateProductAvailability(item.getProductId(), quantity);
-                    item.setQuantity(quantity);
-                });
+                .ifPresentOrElse(
+                    item -> {
+                        validateProductAvailability(item.getProductId(), quantity);
+                        item.setQuantity(quantity);
+                    },
+                    () -> {
+                        throw new CartNotFoundException("Cart item not found: " + itemId);
+                    }
+                );
         
         cartRepository.persist(cart);
-        return cartMapper.toDto(cart);
+        return cartMapper.toDtoWithItems(cart);
     }
 
     @Transactional
-    public CartResponse removeItemFromCart(UUID userId, UUID itemId) {
+    public CartResponse removeItemFromCart(UUID userId, String itemId) {
+        UUID itemUuid;
+        try {
+            itemUuid = UUID.fromString(itemId);
+        } catch (IllegalArgumentException e) {
+            throw new CartNotFoundException("Invalid item ID format: " + itemId);
+        }
+        
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("Cart not found for user: " + userId));
         
-        cart.getItems().removeIf(item -> item.getId().equals(itemId));
+        boolean removed = cart.getItems().removeIf(item -> item.getId().equals(itemUuid));
+        
+        if (!removed) {
+            throw new CartNotFoundException("Cart item not found: " + itemId);
+        }
         
         if (cart.getItems().isEmpty()) {
             cartRepository.delete(cart);
@@ -94,7 +117,7 @@ public class CartService {
         }
         
         cartRepository.persist(cart);
-        return cartMapper.toDto(cart);
+        return cartMapper.toDtoWithItems(cart);
     }
 
     @Transactional
@@ -111,7 +134,7 @@ public class CartService {
 
     private CartResponse createNewCart(UUID userId) {
         Cart newCart = createNewCartEntity(userId);
-        return cartMapper.toDto(newCart);
+        return cartMapper.toDtoWithItems(newCart);
     }
 
     private void addNewCartItem(Cart cart, CartItemRequest request) {

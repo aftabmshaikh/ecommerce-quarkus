@@ -98,6 +98,7 @@ public class InventoryController {
 
     @GET
     @Path("/health")
+    @Produces(MediaType.TEXT_PLAIN)
     @Operation(summary = "Health check endpoint")
     public String health() {
         return "Inventory Service is healthy";

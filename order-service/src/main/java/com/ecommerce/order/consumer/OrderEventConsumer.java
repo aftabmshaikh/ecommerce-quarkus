@@ -2,6 +2,7 @@ package com.ecommerce.order.consumer;
 
 import com.ecommerce.order.model.OrderStatus;
 import com.ecommerce.order.service.OrderService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -17,9 +18,13 @@ public class OrderEventConsumer {
     @Inject
     OrderService orderService;
 
+    @Inject
+    ObjectMapper objectMapper;
+
     @Incoming("payment-events")
-    public void handlePaymentEvent(Map<String, Object> event) {
+    public void handlePaymentEvent(String eventJson) {
         try {
+            Map<String, Object> event = objectMapper.readValue(eventJson, Map.class);
             String eventType = (String) event.get("eventType");
             UUID orderId = UUID.fromString((String) event.get("orderId"));
 
@@ -48,13 +53,14 @@ public class OrderEventConsumer {
                     log.warnf("Unknown payment event type: %s", eventType);
             }
         } catch (Exception e) {
-            log.errorf(e, "Error processing payment event: %s", event);
+            log.errorf(e, "Error processing payment event: %s", eventJson);
         }
     }
 
     @Incoming("inventory-events")
-    public void handleInventoryEvent(Map<String, Object> event) {
+    public void handleInventoryEvent(String eventJson) {
         try {
+            Map<String, Object> event = objectMapper.readValue(eventJson, Map.class);
             String eventType = (String) event.get("eventType");
             String orderId = (String) event.get("orderId");
 
@@ -80,7 +86,7 @@ public class OrderEventConsumer {
                     log.warnf("Unknown inventory event type: %s", eventType);
             }
         } catch (Exception e) {
-            log.errorf(e, "Error processing inventory event: %s", event);
+            log.errorf(e, "Error processing inventory event: %s", eventJson);
         }
     }
 }

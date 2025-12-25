@@ -38,12 +38,8 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        Optional<User> userOptional = userRepository.findByUsername(request.getIdentifier());
-        if (userOptional.isEmpty()) {
-            userOptional = userRepository.findByEmail(request.getIdentifier());
-        }
-
-        User user = userOptional.orElseThrow(() -> new UserNotFoundException("Invalid credentials"));
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AuthenticationException("Invalid credentials"));
 
         if (!userService.verifyPassword(request.getPassword(), user.getPassword())) {
             throw new AuthenticationException("Invalid credentials");
@@ -60,6 +56,27 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .user(userService.getUserById(user.getId()))
                 .build();
+    }
+
+    public LoginResponse refreshToken(String token) {
+        // For now, validate the token exists
+        // In a production system, you would:
+        // 1. Parse the refresh token to extract user information
+        // 2. Verify the token signature and expiration
+        // 3. Generate new access and refresh tokens
+        
+        if (token == null || token.isEmpty()) {
+            throw new AuthenticationException("Token is required");
+        }
+        
+        // TODO: Implement proper refresh token validation and user extraction
+        // This requires proper JWT parsing using JwtConsumer from SmallRye JWT
+        // For now, this is a placeholder that validates token format but needs proper implementation
+        
+        // Placeholder: In production, parse the refresh token to get username/email
+        // and then look up the user to generate new tokens
+        // For now, return an error indicating the feature needs implementation
+        throw new AuthenticationException("Refresh token functionality requires proper JWT parsing implementation. Please re-login.");
     }
 
     // Method to validate JWT token (can be used by other services or for token refresh)

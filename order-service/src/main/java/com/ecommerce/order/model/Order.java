@@ -26,32 +26,32 @@ public class Order {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
     
-    @Column(nullable = false)
+    @Column(name = "customer_id", nullable = false)
     private UUID customerId;
     
-    @Column(nullable = false, unique = true)
+    @Column(name = "order_number", nullable = false, unique = true)
     private String orderNumber;
     
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false)
     private OrderStatus status;
     
-    @Column(nullable = false)
+    @Column(name = "shipping_address", nullable = false)
     private String shippingAddress;
     
-    @Column(nullable = false)
+    @Column(name = "billing_address", nullable = false)
     private String billingAddress;
     
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "subtotal", nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal = BigDecimal.ZERO;
     
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "tax", nullable = false, precision = 10, scale = 2)
     private BigDecimal tax = BigDecimal.ZERO;
     
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "shipping_fee", nullable = false, precision = 10, scale = 2)
     private BigDecimal shippingFee = BigDecimal.ZERO;
     
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "total", nullable = false, precision = 10, scale = 2)
     private BigDecimal total = BigDecimal.ZERO;
     
     @Column(columnDefinition = "TEXT")
@@ -107,11 +107,14 @@ public class Order {
     @Column(name = "tracking_number")
     private String trackingNumber;
     
+    @Column(name = "carrier")
     private String carrier;
     
     @Version
+    @Column(name = "version")
     private Long version = 0L;
     
+    @Column(name = "currency")
     private String currency;
 
     // Business methods
@@ -166,7 +169,9 @@ public class Order {
         if (this.statusHistory == null) {
             this.statusHistory = new ArrayList<>();
         }
-        this.statusHistory.add(OrderStatusHistory.create(status, "Status updated to " + status));
+        OrderStatusHistory history = OrderStatusHistory.create(status, "Status updated to " + status);
+        history.setOrder(this);
+        this.statusHistory.add(history);
     }
 
     // Helper methods

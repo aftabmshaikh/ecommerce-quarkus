@@ -77,4 +77,28 @@ public class OrderController {
     public Response health() {
         return Response.ok("Order Service is healthy").build();
     }
+
+    // Review endpoints
+    @POST
+    @Path("/{orderId}/reviews")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Submit a review for an order item")
+    public Response submitReview(
+            @PathParam("orderId") UUID orderId,
+            com.ecommerce.order.dto.reviews.ReviewRequest request) {
+        // TODO: Implement review service
+        return Response.status(Response.Status.NOT_IMPLEMENTED)
+                .entity("{\"message\":\"Review submission functionality not yet implemented\"}")
+                .build();
+    }
+
+    @GET
+    @Path("/{orderId}/reviews")
+    @Operation(summary = "Get reviews for an order")
+    public Response getOrderReviews(@PathParam("orderId") UUID orderId) {
+        // TODO: Implement review service
+        return Response.status(Response.Status.NOT_IMPLEMENTED)
+                .entity("{\"message\":\"Order reviews functionality not yet implemented\"}")
+                .build();
+    }
 }

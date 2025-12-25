@@ -29,17 +29,26 @@ public class ProductController {
 
     @POST
     @Operation(summary = "Create a new product")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response createProduct(@Valid ProductRequest request) {
         ProductResponse response = productService.createProduct(request);
-        return Response.status(Response.Status.CREATED).entity(response).build();
+        if (response == null || response.getId() == null) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\":\"Failed to create product\"}")
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        return Response.status(Response.Status.CREATED)
+                .entity(response)
+                .type(MediaType.APPLICATION_JSON)
+                .build();
     }
 
     @GET
     @Path("/{id}")
     @Operation(summary = "Get product by ID")
-    @CircuitBreaker(requestVolumeThreshold = 10, failureRatio = 0.5, delay = 5000)
-    @Retry(maxRetries = 3, delay = 1000)
-    @Fallback(fallbackMethod = "getProductFallback")
+    @CircuitBreaker(requestVolumeThreshold = 10, failureRatio = 0.5, delay = 5000, skipOn = {jakarta.ws.rs.NotFoundException.class, com.ecommerce.product.exception.ResourceNotFoundException.class})
+    @Retry(maxRetries = 3, delay = 1000, abortOn = {jakarta.ws.rs.NotFoundException.class, com.ecommerce.product.exception.ResourceNotFoundException.class})
     public ProductResponse getProductById(@PathParam("id") UUID id) {
         return productService.getProductById(id);
     }

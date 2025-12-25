@@ -42,7 +42,7 @@ public class CartController {
     @Operation(summary = "Update cart item quantity")
     public CartResponse updateCartItem(
             @HeaderParam("X-User-Id") UUID userId,
-            @PathParam("itemId") UUID itemId,
+            @PathParam("itemId") String itemId,
             @QueryParam("quantity") int quantity) {
         return cartService.updateCartItem(userId, itemId, quantity);
     }
@@ -52,7 +52,7 @@ public class CartController {
     @Operation(summary = "Remove an item from the cart")
     public CartResponse removeFromCart(
             @HeaderParam("X-User-Id") UUID userId,
-            @PathParam("itemId") UUID itemId) {
+            @PathParam("itemId") String itemId) {
         return cartService.removeItemFromCart(userId, itemId);
     }
 

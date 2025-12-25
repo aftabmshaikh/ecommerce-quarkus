@@ -2,7 +2,20 @@ package com.ecommerce.payment.model;
 
 public enum PaymentStatus {
     PENDING,
+    AUTHORIZED,
+    CAPTURED,
     COMPLETED,
+    SUCCEEDED,
+    PARTIALLY_REFUNDED,
+    REFUNDED,
     FAILED,
-    REFUNDED
+    CANCELED,
+    VOIDED,
+    PROCESSING,
+    REQUIRES_ACTION,
+    REQUIRES_CAPTURE,
+    REQUIRES_CONFIRMATION,
+    REQUIRES_PAYMENT_METHOD,
+    EXPIRED,
+    DISPUTED
 }

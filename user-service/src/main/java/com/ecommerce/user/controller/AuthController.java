@@ -2,6 +2,7 @@ package com.ecommerce.user.controller;
 
 import com.ecommerce.user.dto.LoginRequest;
 import com.ecommerce.user.dto.LoginResponse;
+import com.ecommerce.user.dto.RefreshTokenRequest;
 import com.ecommerce.user.dto.UserRequest;
 import com.ecommerce.user.dto.UserResponse;
 import com.ecommerce.user.service.AuthService;
@@ -38,5 +39,12 @@ public class AuthController {
     @Operation(summary = "Authenticate a user and get a token")
     public LoginResponse login(@Valid LoginRequest request) {
         return authService.login(request);
+    }
+
+    @POST
+    @Path("/refresh-token")
+    @Operation(summary = "Refresh authentication token")
+    public LoginResponse refreshToken(@Valid RefreshTokenRequest request) {
+        return authService.refreshToken(request.getToken());
     }
 }

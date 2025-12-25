@@ -2,9 +2,11 @@
 CREATE TABLE IF NOT EXISTS carts (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL UNIQUE,
+    coupon_code VARCHAR(255),
+    discount_amount NUMERIC(10, 2),
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
-    version BIGINT NOT NULL
+    updated_at TIMESTAMP,
+    CONSTRAINT uk_carts_user_id UNIQUE (user_id)
 );
 
 -- Create cart_items table
@@ -13,12 +15,10 @@ CREATE TABLE IF NOT EXISTS cart_items (
     cart_id UUID NOT NULL,
     product_id UUID NOT NULL,
     product_name VARCHAR(255) NOT NULL,
-    product_price DECIMAL(19, 4) NOT NULL,
+    product_image VARCHAR(512),
+    unit_price NUMERIC(10, 2) NOT NULL,
     quantity INTEGER NOT NULL,
-    image_url VARCHAR(512),
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
-    version BIGINT NOT NULL,
+    item_total NUMERIC(10, 2) NOT NULL,
     CONSTRAINT fk_cart FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
     CONSTRAINT uk_cart_item UNIQUE (cart_id, product_id)
 );

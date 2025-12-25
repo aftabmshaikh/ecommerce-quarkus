@@ -1,20 +1,20 @@
--- Create enum type for order status
-CREATE TYPE order_status AS ENUM (
-    'PENDING',
-    'PROCESSING',
-    'PAID',
-    'SHIPPED',
-    'DELIVERED',
-    'CANCELLED',
-    'REFUNDED'
-);
+-- Create enum type for order status (keeping for reference, but using VARCHAR for compatibility)
+-- CREATE TYPE order_status AS ENUM (
+--     'PENDING',
+--     'PROCESSING',
+--     'PAID',
+--     'SHIPPED',
+--     'DELIVERED',
+--     'CANCELLED',
+--     'REFUNDED'
+-- );
 
 -- Create orders table
 CREATE TABLE orders (
     id UUID PRIMARY KEY,
     customer_id UUID NOT NULL,
     order_number VARCHAR(50) NOT NULL UNIQUE,
-    status order_status NOT NULL,
+    status VARCHAR(50) NOT NULL,
     shipping_address TEXT NOT NULL,
     billing_address TEXT NOT NULL,
     customer_email VARCHAR(255) NOT NULL,
@@ -26,6 +26,18 @@ CREATE TABLE orders (
     notes TEXT,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
+    paid_at TIMESTAMP,
+    processing_at TIMESTAMP,
+    shipped_at TIMESTAMP,
+    out_for_delivery_at TIMESTAMP,
+    delivered_date TIMESTAMP,
+    cancelled_at TIMESTAMP,
+    return_requested_at TIMESTAMP,
+    returned_at TIMESTAMP,
+    estimated_delivery_date TIMESTAMP,
+    tracking_number VARCHAR(255),
+    carrier VARCHAR(100),
+    currency VARCHAR(10),
     version BIGINT NOT NULL
 );
 
@@ -44,6 +56,16 @@ CREATE TABLE order_items (
     updated_at TIMESTAMP NOT NULL,
     version BIGINT NOT NULL,
     CONSTRAINT fk_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
+-- Create order_status_history table
+CREATE TABLE order_status_history (
+    id BIGSERIAL PRIMARY KEY,
+    order_id UUID NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    message TEXT,
+    status_date TIMESTAMP NOT NULL,
+    CONSTRAINT fk_order_status_history_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
 -- Create indexes for better query performance

@@ -19,26 +19,27 @@ public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    
-    @Column(nullable = false)
+
+    @Column(name = "recipient_email", nullable = false)
     private String recipientEmail;
-    
+
     @Column(nullable = false)
     private String subject;
-    
-    @Column(columnDefinition = "TEXT")
+
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationType type;
-    
+
     @Column(nullable = false)
     private boolean sent;
-    
-    @Column(nullable = false)
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-    
+
+    @Column(name = "sent_at")
     private LocalDateTime sentAt;
     
     public enum NotificationType {

@@ -59,4 +59,24 @@ public class JwtService {
             return false;
         }
     }
+
+    public String getUsernameFromToken(String token) {
+        // In a real implementation, you would parse the JWT token and extract the username
+        // For now, this is a placeholder. In production, use a proper JWT library to parse.
+        try {
+            // Parse token and extract username (upn claim)
+            // SmallRye JWT provides JwtConsumer for parsing tokens
+            // This is simplified - in production use proper JWT parsing with JwtConsumer
+            // For now, we'll need to implement proper token parsing
+            // Placeholder implementation - should be replaced with actual JWT parsing
+            if (token == null || token.isEmpty()) {
+                throw new IllegalArgumentException("Token cannot be null or empty");
+            }
+            // TODO: Implement proper JWT token parsing to extract username/upn claim
+            // This requires using JwtConsumer from SmallRye JWT
+            throw new UnsupportedOperationException("JWT token parsing not yet fully implemented");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract username from token", e);
+        }
+    }
 }
